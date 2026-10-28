@@ -17,8 +17,10 @@
 
 body {
   min-width: 320px;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   margin: 0;
+  overflow: hidden;
   background: #f7f6f1;
 }
 
@@ -29,7 +31,9 @@ button { color: inherit; }
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr);
   width: min(1440px, 100%);
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   margin: 0 auto;
   background: #fcfbf8;
 }
@@ -37,8 +41,10 @@ button { color: inherit; }
 .sidebar {
   position: relative;
   display: flex;
-  min-height: 100vh;
+  min-height: 0;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 29px 18px 17px;
   border-right: 1px solid var(--line);
   background: #f8f7f2;
@@ -130,7 +136,7 @@ button { color: inherit; }
 .footer-copy small { color: #96978e; font-size: 9px; }
 .more-dots { margin-left: auto; color: #85877f; font-weight: 700; letter-spacing: 1px; }
 
-.chat-panel { display: flex; min-width: 0; min-height: 100vh; flex-direction: column; }
+.chat-panel { display: flex; min-width: 0; min-height: 0; flex-direction: column; overflow: hidden; }
 .topbar {
   display: flex;
   height: 66px;
@@ -154,6 +160,9 @@ button { color: inherit; }
   flex: 1;
   flex-direction: column;
   align-self: center;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 34px;
 }
 .welcome { width: 100%; margin: auto 0; padding: 43px 0 35px; animation: appear .5s ease both; }
@@ -197,6 +206,10 @@ h1 span { color: #819071; font-weight: 500; font-style: italic; }
 .suggestion-row { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
 .suggestion-chip { padding: 7px 10px; border: 1px solid #e4e6dc; border-radius: 20px; background: #fbfbf6; color: #64705e; cursor: pointer; font-size: 10px; transition: background .2s; }
 .suggestion-chip:hover { background: #eef1e8; }
+.source-list { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 11px; }
+.source-label { color: #96978e; font-size: 9px; }
+.source-link { color: #65745c; font-size: 9px; text-decoration: underline; text-decoration-color: #c9d0c1; text-underline-offset: 2px; }
+.source-link:hover { color: #394d36; }
 
 .composer-wrap { width: min(720px, 100%); align-self: center; padding: 10px 34px 19px; }
 .composer { padding: 12px 13px 9px 16px; border: 1px solid #e4e5dc; border-radius: 12px; background: #fffefa; box-shadow: 0 4px 16px #3d422b08; transition: border-color .2s, box-shadow .2s; }
@@ -208,6 +221,11 @@ h1 span { color: #819071; font-weight: 500; font-style: italic; }
 .composer-hint span { margin-right: 4px; color: #a88766; }
 .composer-controls { display: flex; align-items: center; gap: 9px; }
 .char-count { color: #a1a198; font-size: 9px; }
+.mic-button { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid #e3e5dc; border-radius: 8px; background: #fbfbf6; color: #66745f; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.mic-button:hover { border-color: #bec9b6; background: #eef1e8; }
+.mic-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+.mic-button.is-listening { border-color: #b96c5a; background: #f7eae6; color: #a74d3d; animation: mic-pulse 1.3s infinite; }
+.mic-button:focus-visible { outline: 2px solid #829477; outline-offset: 2px; }
 .send-button { display: grid; width: 29px; height: 29px; place-items: center; border: 0; border-radius: 8px; background: #53664d; color: white; cursor: pointer; transition: background .2s, transform .2s; }
 .send-button:hover:not(:disabled) { transform: translateY(-1px); background: #3f533c; }
 .send-button:disabled { background: #e8e9e2; color: #a6a99f; cursor: not-allowed; }
@@ -218,6 +236,7 @@ h1 span { color: #819071; font-weight: 500; font-style: italic; }
 .toast.visible { transform: translateY(0); opacity: 1; }
 
 @keyframes pulse { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+@keyframes mic-pulse { 50% { box-shadow: 0 0 0 4px #b96c5a20; } }
 @keyframes appear { from { transform: translateY(5px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 @media (min-height: 850px) {
@@ -228,7 +247,7 @@ h1 span { color: #819071; font-weight: 500; font-style: italic; }
 @media (max-width: 760px) {
   .app-shell { display: block; }
   .sidebar { display: none; }
-  .chat-panel { min-height: 100dvh; }
+  .chat-panel { height: 100%; }
   .topbar { height: 58px; padding: 0 19px; }
   .mobile-brand { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: #303d2f; font-family: Manrope, sans-serif; font-size: 16px; font-weight: 800; letter-spacing: -.7px; }
   .mini-mark { margin-right: 2px; color: #75866a; font-size: 17px; }

@@ -1,6 +1,7 @@
 const form = document.querySelector("#chat-form");
 const input = document.querySelector("#chat-input");
 const sendButton = document.querySelector("#send-button");
+const micButton = document.querySelector("#mic-button");
 const messages = document.querySelector("#messages");
 const welcome = document.querySelector("#welcome");
 const conversation = document.querySelector("#conversation");
@@ -9,66 +10,84 @@ const toast = document.querySelector("#toast");
 
 let typingTimer;
 let toastTimer;
+let sessionContext = { goal: "", skinType: "", sensitivity: false };
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isListening = false;
+let speechBaseText = "";
+let finalTranscript = "";
 
-const replyBank = [
-  {
-    match: /\b(routine|morning|evening|start|beginner|steps)\b/i,
-    text: "<p><strong>A good routine can be wonderfully simple.</strong></p><p><strong>Morning:</strong> gentle cleanser (or just a rinse), moisturizer, then broad-spectrum SPF 30 or higher. <strong>Evening:</strong> cleanser and moisturizer.</p><p>Stick with the basics for a couple of weeks before adding anything new. Want to tell me your skin type or what you’d like your routine to help with?</p>",
-    chips: ["My skin is sensitive", "I want help with breakouts"],
-  },
-  {
-    match: /\b(dry|dryness|flaky|dehydrat|tight|hydration)\b/i,
-    text: "<p>That tight, flaky feeling can be uncomfortable. You could try a gentle, fragrance-free cleanser, applying a plain moisturizer to slightly damp skin, and avoiding hot water or scrubbing.</p><p>Ingredients like glycerin and ceramides are commonly used in moisturizers. Add one new product at a time and patch test first. If the dryness is persistent, painful, or worsening, a dermatologist can help figure out what’s going on.</p>",
-    chips: ["What is a patch test?", "Help me build a routine"],
-  },
-  {
-    match: /\b(breakout|breakouts|acne|pimple|spots?)\b/i,
-    text: "<p>Breakouts are common, and they’re not a reflection of how clean your skin is. A gentle cleanser, non-comedogenic moisturizer, and daily sunscreen are a sensible foundation. Try not to pick or scrub, since that can irritate skin.</p><p>Some over-the-counter ingredients may help, but can also irritate—introduce only one at a time and follow its label. For painful, scarring, or persistent acne, a dermatologist can suggest options that fit your skin.</p>",
-    chips: ["What does salicylic acid do?", "My skin feels sensitive"],
-  },
-  {
-    match: /\b(sensitive|irritat|react|stinging|burning|redness)\b/i,
-    text: "<p>If your skin feels reactive, it may help to pause new or active products and keep things gentle: mild cleanser, fragrance-free moisturizer, and sunscreen that feels comfortable to you.</p><p>Try new products on a small area first and introduce them one at a time. If you have severe pain, swelling, blistering, or a reaction that isn’t settling, stop using the product and contact a healthcare professional.</p>",
-    chips: ["How do I patch test?", "What ingredients should I know?"],
-  },
-  {
-    match: /\b(sunscreen|spf|sun ?screen|sun protection)\b/i,
-    text: "<p>Sunscreen is one of the most useful everyday skincare steps. Look for broad-spectrum SPF 30 or higher, apply it generously to exposed skin, and reapply about every two hours outdoors—and after swimming or sweating. Hats and shade are helpful, too.</p><p>Choose a formula you enjoy wearing; consistency matters. Follow the product label, and ask a dermatologist if you have a skin condition or need help choosing one.</p>",
-    chips: ["Help me build a morning routine", "What does broad-spectrum mean?"],
-  },
-  {
-    match: /\b(niacinamide|salicylic acid|retinol|retinoid|hyaluronic acid|ceramide|ingredient)\b/i,
-    text: "<p>Skincare ingredients can be confusing. The best choice depends on what you want help with, your skin’s tolerance, and the rest of your routine. Start with one new product at a time, follow its label, and patch test on a small area before regular use.</p><p>Some active ingredients can increase irritation or sun sensitivity, so sunscreen is a helpful daytime habit. What ingredient or product are you curious about specifically?</p>",
-    chips: ["What does niacinamide do?", "Tell me about retinol"],
-  },
-  {
-    match: /\b(skin type|oily|combination|normal skin)\b/i,
-    text: "<p>A simple way to get a rough sense of your skin type: wash gently, pat dry, and wait about 30 minutes without applying products. If most of your face feels tight, it may lean dry; if it looks shiny across your face, it may lean oily; shine mainly in the T-zone can suggest combination skin.</p><p>It’s only a clue—skin changes with weather, hormones, and products. You don’t need a label to start with a gentle cleanser, moisturizer, and sunscreen.</p>",
-    chips: ["Help me build a routine", "My skin is sensitive"],
-  },
-  {
-    match: /\b(patch test|test a product)\b/i,
-    text: "<p>For a simple home patch test, apply a small amount of the product to a discreet area—such as the inner forearm or behind the ear—following the product’s directions. Watch for irritation over the next day or two before using it more widely.</p><p>A patch test can’t guarantee a product won’t cause a reaction, and it isn’t the same as medical allergy testing. Stop if irritation develops.</p>",
-    chips: ["My skin feels sensitive", "Help me build a routine"],
-  },
-  {
-    match: /\b(eczema|rosacea|rash|allerg|infection|diagnos|prescription|medication)\b/i,
-    text: "<p>I can share general skincare information, but I can’t diagnose skin conditions or advise on prescription treatments. A dermatologist or other healthcare professional is the right person to assess this and recommend care.</p><p>In the meantime, avoid products that sting or worsen symptoms. Seek prompt medical care for a severe reaction, rapidly worsening symptoms, or signs of infection.</p>",
-    chips: ["Keep my routine gentle", "How do I patch test?"],
-  },
-  {
-    match: /\b(hello|hi|hey|good morning|good evening)\b/i,
-    text: "<p>Hi there! I’m glad you’re here. I can help you keep a routine simple, learn about ingredients, or talk through everyday skin concerns.</p><p>What would you like to explore?</p>",
-    chips: ["Help me build a routine", "How do I figure out my skin type?"],
-  },
-];
+function updateContext(message) {
+  if (/\b(dry|dryness|flaky|tight)\b/i.test(message)) sessionContext.skinType = "dry or tight";
+  if (/\b(oily|greasy|shiny)\b/i.test(message)) sessionContext.skinType = "oily";
+  if (/\b(sensitive|stinging|burning|reactive)\b/i.test(message)) sessionContext.sensitivity = true;
+  if (/\b(acne|break ?outs?|pimples?|blackheads?|whiteheads?)\b/i.test(message)) sessionContext.goal = "breakouts";
+  else if (/\b(dark spots?|uneven tone|acne marks?|hyperpigment)\b/i.test(message)) sessionContext.goal = "dark marks";
+  else if (/\b(dryness|dry skin|flaky|tight)\b/i.test(message)) sessionContext.goal = "dryness";
+  else if (/\b(sunscreen|spf|sun ?screen)\b/i.test(message)) sessionContext.goal = "sun protection";
+}
 
 function getReply(message) {
-  const found = replyBank.find((item) => item.match.test(message));
-  if (found) return found;
+  const priority = {
+    urgent: 100,
+    pregnancy: 95,
+    "eczema-rosacea": 90,
+    sensitivity: 85,
+    "ingredient-benzoyl": 80,
+    "ingredient-salicylic": 80,
+    "ingredient-niacinamide": 80,
+    "ingredient-retinoid": 80,
+    "ingredient-hydrators": 80,
+    "ingredient-vitamin-c": 80,
+    "dark-spots": 75,
+    sunscreen: 75,
+    acne: 70,
+    dryness: 65,
+    "oily-skin": 60,
+    moisturizer: 55,
+    "skin-type": 50,
+    routine: 45,
+    greeting: 1,
+  };
+  const topics = window.SKIN_KNOWLEDGE.topics;
+  const matches = topics.filter((item) =>
+    item.patterns.some((pattern) => pattern.test(message)),
+  );
+  const safetyTopic = matches.find((item) =>
+    ["urgent", "pregnancy", "eczema-rosacea", "sensitivity"].includes(item.id),
+  );
+  const asksForRoutine = /\b(?:build|make|create|suggest|recommend|help me with)\b.{0,45}\broutine\b|\b(?:morning|evening)\s+routine\b|\broutine\s+(?:for|with)\b/i.test(message);
+  const topic = safetyTopic
+    || (asksForRoutine && matches.some((item) => item.id === "routine")
+      ? topics.find((item) => item.id === "routine")
+      : matches.sort((first, second) =>
+        (priority[second.id] || 0) - (priority[first.id] || 0),
+      )[0]);
+  if (topic) {
+    const hasContext = sessionContext.goal || sessionContext.skinType || sessionContext.sensitivity;
+    const answer = topic.id === "routine" && hasContext
+      ? `<p>I’ll keep ${sessionContext.goal ? `your goal of ${sessionContext.goal}` : `your ${sessionContext.skinType || "sensitive"} skin`} in mind. ${sessionContext.sensitivity ? "Since you mentioned sensitivity, stick to products you already tolerate and stop anything that irritates you. " : ""}Here’s a simple starting point: <strong>morning:</strong> gentle cleanser if needed, moisturizer, and broad-spectrum SPF 30+; <strong>evening:</strong> cleanse and moisturize. Add only one new product at a time.</p><p>What are you currently using, and what would you most like to change?</p>`
+      : topic.answer;
+    return { ...topic, answer };
+  }
+
+  if (sessionContext.goal || sessionContext.skinType || sessionContext.sensitivity) {
+    const context = [
+      sessionContext.goal ? `your goal of ${sessionContext.goal}` : "",
+      sessionContext.skinType ? `your ${sessionContext.skinType} skin` : "",
+      sessionContext.sensitivity ? "your skin sensitivity" : "",
+    ].filter(Boolean).join(" and ");
+    return {
+      answer: `<p>I want to make sure I answer the question you actually mean. I remember ${context}. Are you asking about a product, an ingredient, or what to try next?</p>`,
+      chips: ["A product", "An ingredient", "What to try next"],
+      sources: [],
+    };
+  }
+
   return {
-    text: "<p>Good question. Skincare advice can depend on your skin, your current routine, and what you’re hoping to change. A gentle cleanser, moisturizer, and daily broad-spectrum sunscreen are a helpful starting point for many people.</p><p>Tell me a little more—are you curious about a routine, a particular ingredient, or a skin concern?</p>",
-    chips: ["Help me build a routine", "Decode an ingredient"],
+    answer: "<p>I’m not sure which part you mean, and I don’t want to guess. Is this about a routine, a product ingredient, sunscreen, or a skin concern? If you tell me what you’re noticing and what you already use, I can give a more relevant general answer.</p>",
+    chips: ["Routine", "Ingredient", "Sunscreen", "Skin concern"],
+    sources: [],
   };
 }
 
@@ -90,18 +109,37 @@ function appendMessage(text, isUser) {
   label.textContent = isUser ? "YOU" : "SKINFOLK";
   const bubble = document.createElement("div");
   bubble.className = "bubble";
-  if (isUser) {
-    bubble.textContent = text;
-  } else {
-    bubble.innerHTML = text;
-  }
+  if (isUser) bubble.textContent = text;
+  else bubble.innerHTML = text;
   content.append(label, bubble);
   message.append(content);
   messages.append(message);
   return message;
 }
 
+function appendSources(container, sourceIds) {
+  const sources = sourceIds.map((id) => window.SKIN_KNOWLEDGE.sources[id]).filter(Boolean);
+  if (!sources.length) return;
+  const row = document.createElement("div");
+  row.className = "source-list";
+  const label = document.createElement("span");
+  label.className = "source-label";
+  label.textContent = "Sources:";
+  row.append(label);
+  sources.forEach((source) => {
+    const link = document.createElement("a");
+    link.className = "source-link";
+    link.href = source.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = source.label;
+    row.append(link);
+  });
+  container.append(row);
+}
+
 function appendSuggestions(container, suggestions) {
+  if (!suggestions.length) return;
   const row = document.createElement("div");
   row.className = "suggestion-row";
   suggestions.forEach((suggestion) => {
@@ -134,7 +172,9 @@ function showTyping() {
 function submitMessage(text) {
   const cleaned = text.trim();
   if (!cleaned) return;
+  stopDictation();
   window.clearTimeout(typingTimer);
+  updateContext(cleaned);
   welcome.hidden = true;
   appendMessage(cleaned, true);
   input.value = "";
@@ -144,10 +184,12 @@ function submitMessage(text) {
   const reply = getReply(cleaned);
   typingTimer = window.setTimeout(() => {
     typing.remove();
-    const response = appendMessage(reply.text, false);
-    appendSuggestions(response.querySelector(".message-content"), reply.chips);
+    const response = appendMessage(reply.answer, false);
+    const content = response.querySelector(".message-content");
+    appendSources(content, reply.sources);
+    appendSuggestions(content, reply.chips);
     conversation.scrollTo({ top: conversation.scrollHeight, behavior: "smooth" });
-  }, 650 + Math.random() * 450);
+  }, 450);
 }
 
 function updateComposer() {
@@ -159,8 +201,10 @@ function updateComposer() {
 
 function newConversation() {
   window.clearTimeout(typingTimer);
+  stopDictation();
   messages.replaceChildren();
   welcome.hidden = false;
+  sessionContext = { goal: "", skinType: "", sensitivity: false };
   input.value = "";
   updateComposer();
   input.focus();
@@ -171,12 +215,95 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("visible");
   window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 2600);
+  toastTimer = window.setTimeout(() => toast.classList.remove("visible"), 3000);
+}
+
+function stopDictation() {
+  if (recognition && isListening) recognition.stop();
+  isListening = false;
+  micButton.classList.remove("is-listening");
+  micButton.setAttribute("aria-pressed", "false");
+  micButton.setAttribute("aria-label", "Dictate message");
+  micButton.title = "Dictate message";
+}
+
+function renderTranscript(interimTranscript = "") {
+  const dictated = `${finalTranscript}${interimTranscript}`.trim();
+  const separator = speechBaseText && dictated ? " " : "";
+  input.value = `${speechBaseText}${separator}${dictated}`.slice(0, 600);
+  updateComposer();
+  if (input.value.length >= 600 && isListening) {
+    stopDictation();
+    showToast("Voice input reached the 600-character limit.");
+  }
+}
+
+function startDictation() {
+  if (!SpeechRecognition) {
+    showToast("Voice input isn’t supported by this browser. Try a current version of Chrome or Edge.");
+    return;
+  }
+  if (!recognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.lang = navigator.language || "en-US";
+    recognition.onresult = (event) => {
+      let interimTranscript = "";
+      for (let index = event.resultIndex; index < event.results.length; index += 1) {
+        const transcript = event.results[index][0].transcript;
+        if (event.results[index].isFinal) finalTranscript += `${transcript} `;
+        else interimTranscript += transcript;
+      }
+      renderTranscript(interimTranscript);
+    };
+    recognition.onerror = (event) => {
+      stopDictation();
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        showToast("Microphone access was blocked. Allow microphone access in your browser settings and try again.");
+      } else if (event.error === "no-speech") {
+        showToast("I didn’t hear speech. Tap the microphone and try again.");
+      } else if (event.error !== "aborted") {
+        showToast("Voice input couldn’t start. Check your microphone and try again.");
+      }
+    };
+    recognition.onend = () => {
+      isListening = false;
+      micButton.classList.remove("is-listening");
+      micButton.setAttribute("aria-pressed", "false");
+      micButton.setAttribute("aria-label", "Dictate message");
+      micButton.title = "Dictate message";
+    };
+  }
+
+  speechBaseText = input.value.trimEnd();
+  finalTranscript = "";
+  isListening = true;
+  micButton.classList.add("is-listening");
+  micButton.setAttribute("aria-pressed", "true");
+  micButton.setAttribute("aria-label", "Stop dictation");
+  micButton.title = "Stop dictation";
+  try {
+    recognition.start();
+  } catch (error) {
+    stopDictation();
+    if (error.name === "InvalidStateError") {
+      showToast("Voice input is already active. Tap the microphone again to stop.");
+      return;
+    }
+    showToast("Voice input couldn’t start. Check your microphone and try again.");
+  }
 }
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
   submitMessage(input.value);
+});
+
+micButton.addEventListener("click", () => {
+  if (isListening) stopDictation();
+  else startDictation();
 });
 
 input.addEventListener("input", updateComposer);
@@ -193,5 +320,5 @@ document.querySelectorAll(".starter-card").forEach((card) => {
 document.querySelector("#new-chat").addEventListener("click", newConversation);
 document.querySelector("#mobile-new-chat").addEventListener("click", newConversation);
 document.querySelector("#about-button").addEventListener("click", () => {
-  showToast("Skinfolk offers general skincare information—not medical advice.");
+  showToast("Skinfolk uses curated AAD, NHS, and FDA guidance—not a live AI or medical professional.");
 });
