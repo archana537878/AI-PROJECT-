@@ -16,6 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="style.css" />
+    <script src="skin-knowledge.js" defer></script>
     <script src="script.js" defer></script>
   </head>
   <body>
@@ -103,18 +104,21 @@
         <div class="composer-wrap">
           <form class="composer" id="chat-form">
             <label class="sr-only" for="chat-input">Ask a skincare question</label>
-            <textarea id="chat-input" rows="1" placeholder="Ask me anything about your skin…" maxlength="600" required></textarea>
+            <textarea id="chat-input" rows="1" placeholder="Ask about routines, ingredients, sunscreen, or a skin concern…" maxlength="600" required></textarea>
             <div class="composer-bottom">
-              <span class="composer-hint"><span aria-hidden="true">✳</span> Your gentle guide to skincare</span>
+              <span class="composer-hint"><span aria-hidden="true">✳</span> Evidence-informed, plain-language guidance</span>
               <div class="composer-controls">
                 <span class="char-count" id="char-count" aria-live="polite"></span>
+                <button class="mic-button" id="mic-button" type="button" aria-label="Dictate message" aria-pressed="false" title="Dictate message">
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="3" width="6" height="10" rx="3" /><path d="M5 10a5 5 0 0 0 10 0M10 15v3m-3 0h6" /></svg>
+                </button>
                 <button class="send-button" id="send-button" type="submit" aria-label="Send message" disabled>
                   <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.3 9.8 16.7 3.5l-4.8 13-2.2-5-6.4-1.7Z" /><path d="m9.7 11.5 4-4" /></svg>
                 </button>
               </div>
             </div>
           </form>
-          <p class="disclaimer">Skinfolk shares general skincare information, not medical advice. Your skin is yours—check with a dermatologist for persistent or concerning symptoms.</p>
+          <p class="disclaimer">Voice input uses your browser’s speech recognition and may require microphone permission. Skinfolk shares curated, sourced skincare information—not medical advice or a diagnosis.</p>
         </div>
       </section>
     </main>
