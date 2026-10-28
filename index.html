@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A friendly skincare guide for simple routines, ingredient questions, and everyday skin concerns."
+    />
+    <meta name="theme-color" content="#f7f6f1" />
+    <title>Skinfolk — your skincare companion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="App navigation">
+        <a class="brand" href="#" aria-label="Skinfolk home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M16 27c-7-4.2-10.5-9-9.2-14.2C8 8.3 13 7.6 16 13c3-5.4 8-4.7 9.2-.2C26.5 18 23 22.8 16 27Z" fill="currentColor" />
+              <path d="M16 12.4c-.5 4.2-1.6 7.5-4.2 10.1" stroke="#F7F6F1" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span>skinfolk<span class="brand-period">.</span></span>
+        </a>
+
+        <button class="new-chat-button" id="new-chat" type="button">
+          <span aria-hidden="true">＋</span> New conversation
+        </button>
+
+        <div class="sidebar-label">YOUR SPACE</div>
+        <button class="history-item active" type="button">
+          <span class="history-icon" aria-hidden="true">✳</span>
+          <span>Skincare questions</span>
+          <span class="history-dot" aria-hidden="true"></span>
+        </button>
+        <div class="sidebar-note">
+          <div class="note-flower" aria-hidden="true">✳</div>
+          <p>Good skin days start with being kind to your skin.</p>
+          <span>One simple step at a time</span>
+        </div>
+        <div class="sidebar-footer">
+          <span class="avatar">S</span>
+          <span class="footer-copy"><strong>Your skincare space</strong><small>Curious looks good on you</small></span>
+          <span class="more-dots" aria-hidden="true">···</span>
+        </div>
+      </aside>
+
+      <section class="chat-panel" aria-label="Skincare conversation">
+        <header class="topbar">
+          <button class="mobile-brand" id="mobile-new-chat" type="button" aria-label="Start a new chat">
+            <span class="mini-mark" aria-hidden="true">✳</span> skinfolk<span class="brand-period">.</span>
+          </button>
+          <div class="assistant-presence">
+            <span class="presence-dot"></span>
+            <span>YOUR SKINCARE GUIDE</span>
+          </div>
+          <button class="topbar-action" id="about-button" type="button" aria-label="About Skinfolk">
+            <span aria-hidden="true">ⓘ</span><span class="about-label">About</span>
+          </button>
+        </header>
+
+        <div class="conversation" id="conversation" aria-live="polite" aria-relevant="additions text">
+          <div class="welcome" id="welcome">
+            <div class="eyebrow"><span class="eyebrow-sparkle">✳</span> A LITTLE MORE YOU, A LITTLE LESS GUESSWORK</div>
+            <h1>Let’s get to know<br />your <span>skin.</span></h1>
+            <p class="welcome-copy">Skincare can feel like a lot. Let’s make it feel like you.</p>
+
+            <div class="starter-grid" aria-label="Choose a conversation starter">
+              <button class="starter-card" type="button" data-prompt="Help me build a simple morning routine">
+                <span class="starter-icon morning" aria-hidden="true">☀</span>
+                <span class="starter-text"><strong>A routine that fits my day</strong><small>Simple steps, made for you</small></span>
+                <span class="card-arrow" aria-hidden="true">↗</span>
+              </button>
+              <button class="starter-card" type="button" data-prompt="My skin feels dry. What should I try?">
+                <span class="starter-icon hydration" aria-hidden="true">♧</span>
+                <span class="starter-text"><strong>Talk through a skin concern</strong><small>Dryness, breakouts & more</small></span>
+                <span class="card-arrow" aria-hidden="true">↗</span>
+              </button>
+              <button class="starter-card" type="button" data-prompt="What does niacinamide do?">
+                <span class="starter-icon ingredients" aria-hidden="true">✳</span>
+                <span class="starter-text"><strong>Decode an ingredient</strong><small>What’s worth knowing?</small></span>
+                <span class="card-arrow" aria-hidden="true">↗</span>
+              </button>
+              <button class="starter-card" type="button" data-prompt="How do I figure out my skin type?">
+                <span class="starter-icon skin-type" aria-hidden="true">◉</span>
+                <span class="starter-text"><strong>Get to know my skin</strong><small>Start with the basics</small></span>
+                <span class="card-arrow" aria-hidden="true">↗</span>
+              </button>
+            </div>
+            <div class="welcome-footnote"><span aria-hidden="true">♡</span> No judgment, no 12-step routines. Just a helpful place to start.</div>
+          </div>
+          <div class="messages" id="messages"></div>
+        </div>
+
+        <div class="composer-wrap">
+          <form class="composer" id="chat-form">
+            <label class="sr-only" for="chat-input">Ask a skincare question</label>
+            <textarea id="chat-input" rows="1" placeholder="Ask me anything about your skin…" maxlength="600" required></textarea>
+            <div class="composer-bottom">
+              <span class="composer-hint"><span aria-hidden="true">✳</span> Your gentle guide to skincare</span>
+              <div class="composer-controls">
+                <span class="char-count" id="char-count" aria-live="polite"></span>
+                <button class="send-button" id="send-button" type="submit" aria-label="Send message" disabled>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.3 9.8 16.7 3.5l-4.8 13-2.2-5-6.4-1.7Z" /><path d="m9.7 11.5 4-4" /></svg>
+                </button>
+              </div>
+            </div>
+          </form>
+          <p class="disclaimer">Skinfolk shares general skincare information, not medical advice. Your skin is yours—check with a dermatologist for persistent or concerning symptoms.</p>
+        </div>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
